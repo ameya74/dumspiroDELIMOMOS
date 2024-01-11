@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -14,11 +15,7 @@ import * as Yup from 'yup';
       isGlobal: true,
       envFilePath: ['.env', '.env.dev', '.env.stage', '.env.prod'],
       validationSchema: Yup.object({
-        TYPEORM_HOST: Yup.string().required(),
-        TYPEORM_PORT: Yup.number().default(3306),
-        TYPEORM_USERNAME: Yup.string().required(),
-        TYPEORM_PASSWORD: Yup.string().required(),
-        TYPEORM_DATABASE: Yup.string().required(),
+        TYPEORM_URL: Yup.string().required(),
       }),
     }),
     ThrottlerModule.forRootAsync({
@@ -35,20 +32,10 @@ import * as Yup from 'yup';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: 'mysql',
-        host: config.get<string>('TYPEORM_HOST'),
-        port: config.get<number>('TYPEORM_PORT'),
-        username: config.get<string>('TYPEORM_USERNAME'),
-        password: config.get<string>('TYPEORM_PASSWORD'),
-        database: config.get<string>('TYPEORM_DATABASE'),
+        type: 'mongodb',
+        url: config.get<string>('TYPEORM_URL'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
-        entities: [__dirname + '/**/*.{model,entity}.{ts,js}'],
-        migrations: ['dist/migrations/**/*.js'],
-        subscribers: ['dist/subscriber/**/*.js'],
-        cli: {
-          migrationsDir: config.get<string>('TYPEORM_MIGRATIONS_DIR'),
-          subscribersDir: config.get<string>('TYPEORM_SUBSCRIBERS_DIR'),
-        },
       }),
     }),
     IamModule,
